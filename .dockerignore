@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git/
+.github/
+.gitignore
+.vscode/
+data/
+output/
+test_results/
+*.png
+*.jpg
+*.pdf
+Dockerfile
+.dockerignore
