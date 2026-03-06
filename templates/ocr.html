@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern PDF OCR Detector</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            --white: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --error: #ef4444;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            line-height: 1.5;
+        }
+
+        .wrapper {
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* --- Header Section --- */
+        .header {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #4f46e5, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-size: 1.1rem;
+        }
+
+        /* --- Main Card --- */
+        .card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            padding: 32px;
+            border: 1px solid var(--border);
+        }
+
+        /* --- Upload Area --- */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 48px 24px;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: #f5f3ff;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: #eef2ff;
+            transform: scale(1.01);
+        }
+
+        .upload-icon-circle {
+            width: 64px;
+            height: 64px;
+            background: #eef2ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+            color: var(--primary);
+        }
+
+        .upload-text h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .upload-text p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* --- File Display --- */
+        .file-info {
+            display: none;
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-info.show {
+            display: flex;
+            animation: slideDown 0.3s ease;
+        }
+
+        .file-icon {
+            font-size: 24px;
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+
+        /* --- Buttons --- */
+        .button-group {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            background: var(--primary-hover);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-clear {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-clear:hover {
+            background: #e2e8f0;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* --- Results Section --- */
+        .results-card {
+            display: none;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            padding: 32px;
+            border: 1px solid var(--border);
+        }
+
+        .results-card.show {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .result-item {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 20px;
+        }
+
+        .result-item:last-child {
+            border: none;
+        }
+
+        .result-page-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #eef2ff;
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .result-text {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+            color: #334155;
+            border: 1px solid #f1f5f9;
+        }
+
+        /* --- Alerts --- */
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .alert.show {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        /* --- Loading --- */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <header class="header">
+            <h1>PDF OCR Detector</h1>
+            <p>Trích xuất văn bản</p>
+        </header>
+
+        <main class="card">
+            <div id="alertContainer"></div>
+
+            <form id="uploadForm">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon-circle">📄</div>
+                    <div class="upload-text">
+                        <h3>Chọn tệp hoặc kéo thả</h3>
+                        <p>Hỗ trợ định dạng PDF (Tối đa 20MB)</p>
+                    </div>
+                </div>
+                <input type="file" id="fileInput" accept=".pdf" class="file-input-hidden" style="display: none;" />
+
+                <div class="file-info" id="fileInfo">
+                    <span class="file-icon">📑</span>
+                    <div class="file-details">
+                        <p class="file-name" id="fileName"></p>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        <span id="btnText">Nhận diện</span>
+                        <div id="loader" class="spinner" style="display: none;"></div>
+                    </button>
+                    <button type="button" class="btn-clear" id="clearBtn">Xóa</button>
+                </div>
+            </form>
+        </main>
+
+        <section class="results-card" id="results">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 style="font-size: 1.25rem; font-weight: 700;">Kết quả trích xuất</h3>
+            </div>
+            <div id="resultContent"></div>
+        </section>
+    </div>
+
+    <script>
+        // --- GIỮ NGUYÊN LOGIC CỦA BẠN VÀ CẬP NHẬT MỘT VÀI ĐIỂM UI ---
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const uploadForm = document.getElementById('uploadForm');
+        const clearBtn = document.getElementById('clearBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const loader = document.getElementById('loader');
+        const results = document.getElementById('results');
+        const resultContent = document.getElementById('resultContent');
+        const alertContainer = document.getElementById('alertContainer');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
+            }
+        });
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (file) {
+                if (file.type !== 'application/pdf') {
+                    showAlert('Chỉ chấp nhận định dạng PDF!', 'error');
+                    fileInput.value = '';
+                    fileInfo.classList.remove('show');
+                    return;
+                }
+                fileName.textContent = file.name;
+                fileInfo.classList.add('show');
+                results.classList.remove('show');
+                alertContainer.innerHTML = '';
+            }
+        }
+
+        clearBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            results.classList.remove('show');
+            alertContainer.innerHTML = '';
+        });
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            if (!file) {
+                showAlert('Vui lòng chọn tệp PDF!', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // UI loading state
+            loader.style.display = 'block';
+            btnText.textContent = 'Đang xử lý...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/detect', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Lỗi khi xử lý tệp');
+                }
+
+                const data = await response.json();
+                displayResults(data.data);
+                showAlert('Xử lý hoàn tất!', 'success');
+            } catch (error) {
+                showAlert(`Lỗi: ${error.message}`, 'error');
+            } finally {
+                loader.style.display = 'none';
+                btnText.textContent = 'Bắt đầu nhận diện';
+                submitBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            resultContent.innerHTML = '';
+            if (!data || data.length === 0) {
+                resultContent.innerHTML = '<p style="color: var(--text-muted);">Không tìm thấy văn bản nào trong tệp này.</p>';
+                results.classList.add('show');
+                return;
+            }
+
+            data.forEach((item) => {
+                const pageNum = Object.keys(item)[0];
+                const texts = item[pageNum];
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+
+                let textContent = Array.isArray(texts) ? texts.join('\n') :
+                    (typeof texts === 'object' ? JSON.stringify(texts, null, 2) : String(texts));
+
+                resultItem.innerHTML = `
+                    <span class="result-page-badge">Trang ${parseInt(pageNum) + 1}</span>
+                    <div class="result-text">${escapeHtml(textContent)}</div>
+                `;
+                resultContent.appendChild(resultItem);
+            });
+            results.classList.add('show');
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} show`;
+            alert.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${message}`;
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alert);
+            if (type === 'success') {
+                setTimeout(() => alert.classList.remove('show'), 4000);
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+    </script>
+</body>
+
+</html>

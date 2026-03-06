@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import HTTPException
+from fastapi.templating import Jinja2Templates
 from paddleocr import PaddleOCR
 
 from src.api import router
@@ -21,7 +22,14 @@ async def lifespan(app: FastAPI):
     pass
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
+
+
+@app.get("/")
+def upload_page(request: Request):
+    return Jinja2Templates(directory="templates").TemplateResponse("ocr.html", {"request": request})
+
+
 app.include_router(router)
 
 
