@@ -1,17 +1,65 @@
-.venv/
-__pycache__/
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
 *.pyc
 *.pyo
 *.pyd
-.git/
-.github/
-.gitignore
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
 .vscode/
-data/
-output/
-test_results/
-*.png
-*.jpg
-*.pdf
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Package managers
+.npm
+node_modules/
+
+# Testing & docs
+tests/
+docs/
+*.md
+.pytest.ini
+pytest.ini
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.circleci/
+Jenkinsfile
+
+# Logs
+*.log
+logs/
+
+# Misc
+.env
+.env.local
+.env.*.local
+*.tmp
+.cache/
+
+# Docker
 Dockerfile
+docker-compose.yml
 .dockerignore
